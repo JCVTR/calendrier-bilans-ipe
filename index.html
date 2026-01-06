@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendrier de Réservation - Bilans IPE (SharePoint)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2c5282;
+            --primary-light: #4a90d9;
+            --success: #38a169;
+            --warning: #dd6b20;
+            --danger: #e53e3e;
+            --gray-50: #f7fafc;
+            --gray-100: #edf2f7;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e0;
+            --gray-600: #718096;
+            --gray-800: #2d3748;
+            --gray-900: #1a202c;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--gray-900);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .config-screen {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 700px;
+            margin: 100px auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .config-screen h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .config-screen p {
+            color: var(--gray-600);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .config-screen label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--gray-800);
+        }
+
+        .config-screen input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 10px;
+        }
+
+        .config-screen input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
+        }
+
+        .config-screen .hint {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-bottom: 20px;
+        }
+
+        .config-screen button {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .config-screen button:hover {
+            background: #1e3a5f;
+            transform: scale(1.02);
+        }
+
+        .config-screen button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .config-screen .example {
+            background: var(--gray-50);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .config-screen .example code {
+            font-family: monospace;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-box {
+            background: #fff5f5;
+            border: 2px solid var(--danger);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            color: var(--danger);
+        }
+
+        .success-box {
+            background: #f0fff4;
+            border: 2px solid var(--success);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            color: var(--success);
+        }
+
+        #mainContent {
+            display: none;
+        }
+
+        /* Reprise du style de l'application principale */
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--success));
+        }
+
+        h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--gray-600);
+            font-size: 1.1rem;
+        }
+
+        .sync-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--gray-800);
+            font-size: 0.95rem;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-refresh {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-refresh:hover {
+            background: #1e3a5f;
+            transform: scale(1.02);
+        }
+
+        .btn-config {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-config:hover {
+            background: #c05621;
+            transform: scale(1.02);
+        }
+
+        .stats {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--gray-50), white);
+            border-radius: 12px;
+            border: 2px solid var(--gray-100);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'Fraunces', serif;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .slot-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .slot-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .slot-card.available {
+            border-color: var(--success);
+            background: linear-gradient(to bottom, white, #f0fff4);
+        }
+
+        .slot-card.reserved {
+            border-color: var(--danger);
+            background: linear-gradient(to bottom, white, #fff5f5);
+            opacity: 0.85;
+        }
+
+        .slot-card.mine {
+            border-color: var(--primary);
+            background: linear-gradient(to bottom, white, #ebf8ff);
+        }
+
+        .slot-status {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .status-available {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-reserved {
+            background: var(--danger);
+            color: white;
+        }
+
+        .status-mine {
+            background: var(--primary);
+            color: white;
+        }
+
+        .slot-date {
+            font-family: 'Fraunces', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .slot-time {
+            font-size: 1.1rem;
+            color: var(--gray-600);
+            margin-bottom: 12px;
+        }
+
+        .slot-ipe {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 2px solid var(--gray-100);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .slot-actions {
+            margin-top: 16px;
+        }
+
+        .btn-reserve {
+            width: 100%;
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-reserve:hover {
+            background: #2f855a;
+        }
+
+        .btn-cancel {
+            width: 100%;
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #c53030;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-title {
+            font-family: 'Fraunces', serif;
+            font-size: 1.8rem;
+            color: var(--gray-800);
+            margin-bottom: 12px;
+        }
+
+        .empty-state-text {
+            color: var(--gray-600);
+            font-size: 1.1rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-family: 'Fraunces', serif;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .modal-body {
+            margin-bottom: 30px;
+            line-height: 1.6;
+            color: var(--gray-700);
+        }
+
+        .modal-info {
+            background: var(--gray-50);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .modal-info-item {
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Écran de configuration initial -->
+        <div id="configScreen" class="config-screen">
+            <h1>⚙️ Configuration initiale</h1>
+            <p>Bienvenue ! Pour utiliser cette application, nous avons besoin de l'URL de votre site SharePoint.</p>
+            
+            <div class="example">
+                <strong>💡 Exemple d'URL :</strong><br>
+                <code>https://votreentreprise.sharepoint.com/sites/votresite</code>
+            </div>
+
+            <label for="siteUrlInput">URL du site SharePoint :</label>
+            <input type="text" id="siteUrlInput" placeholder="https://votreentreprise.sharepoint.com/sites/votresite">
+            <div class="hint">Copiez l'URL depuis la barre d'adresse de votre site SharePoint (jusqu'à /sites/nom)</div>
+
+            <div id="configStatus"></div>
+
+            <button onclick="saveSiteUrl()" id="saveBtn">✓ Enregistrer et continuer</button>
+
+            <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid var(--gray-200);">
+                <p style="font-size: 0.9rem; color: var(--gray-600);">
+                    <strong>Note :</strong> Cette configuration n'est nécessaire qu'une seule fois. 
+                    L'URL sera sauvegardée localement dans votre navigateur.
+                </p>
+            </div>
+        </div>
+
+        <!-- Application principale -->
+        <div id="mainContent">
+            <div class="header">
+                <h1>📅 Calendrier de Réservation</h1>
+                <p class="subtitle">Bilans des Ingénieurs pour l'École (IPE)</p>
+                <div class="sync-badge">🔄 Synchronisé avec SharePoint</div>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="ipeSelect">Sélectionnez votre nom :</label>
+                    <select id="ipeSelect">
+                        <option value="">-- Choisir un IPE --</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button class="btn btn-refresh" onclick="refreshData()">🔄 Actualiser</button>
+                </div>
+                <div class="control-group">
+                    <button class="btn btn-config" onclick="showConfigScreen()">⚙️ Reconfigurer</button>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalSlots">-</div>
+                    <div class="stat-label">Créneaux totaux</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="availableSlots">-</div>
+                    <div class="stat-label">Créneaux disponibles</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="reservedSlots">-</div>
+                    <div class="stat-label">Créneaux réservés</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="mySlots">-</div>
+                    <div class="stat-label">Mes réservations</div>
+                </div>
+            </div>
+
+            <div id="slotsContainer" class="slots-grid"></div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Confirmer la réservation</div>
+            <div class="modal-body">
+                <p>Vous êtes sur le point de réserver ce créneau :</p>
+                <div class="modal-info">
+                    <div class="modal-info-item">📅 Date : <strong id="modalDate"></strong></div>
+                    <div class="modal-info-item">🕐 Horaire : <strong id="modalTime"></strong></div>
+                    <div class="modal-info-item">👤 IPE : <strong id="modalIPE"></strong></div>
+                </div>
+                <p>Confirmez-vous cette réservation ?</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-reserve" onclick="confirmReservation()">✓ Confirmer</button>
+                <button class="btn btn-cancel" onclick="closeModal()">✗ Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'annulation -->
+    <div id="cancelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Annuler la réservation</div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir annuler cette réservation ?</p>
+                <div class="modal-info">
+                    <div class="modal-info-item">📅 Date : <strong id="cancelModalDate"></strong></div>
+                    <div class="modal-info-item">🕐 Horaire : <strong id="cancelModalTime"></strong></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="confirmCancellation()">✓ Annuler la réservation</button>
+                <button class="btn btn-reserve" onclick="closeCancelModal()">✗ Garder la réservation</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== CONFIGURATION ==========
+        const SP_CONFIG = {
+            SLOTS_LIST: 'Creneaux_Bilans',
+            RESERVATIONS_LIST: 'Reservations_Bilans',
+            IPE_LIST: 'Liste_IPE'
+        };
+
+        // ========== VARIABLES GLOBALES ==========
+        let slots = [];
+        let reservations = {};
+        let ipes = [];
+        let currentSlotId = null;
+        let siteUrl = '';
+        let requestDigest = '';
+
+        // ========== INITIALISATION ==========
+        window.onload = function() {
+            // Vérifier si l'URL est déjà configurée
+            const savedUrl = localStorage.getItem('sp_site_url');
+            if (savedUrl) {
+                document.getElementById('siteUrlInput').value = savedUrl;
+                siteUrl = savedUrl;
+                loadApp();
+            } else {
+                // Essayer de détecter automatiquement l'URL
+                const currentUrl = window.location.href;
+                if (currentUrl.includes('.sharepoint.com')) {
+                    const match = currentUrl.match(/(https:\/\/[^\/]+\/sites\/[^\/]+)/);
+                    if (match) {
+                        document.getElementById('siteUrlInput').value = match[1];
+                    }
+                }
+            }
+        };
+
+        // ========== CONFIGURATION ==========
+        async function saveSiteUrl() {
+            const input = document.getElementById('siteUrlInput').value.trim();
+            const statusDiv = document.getElementById('configStatus');
+            const saveBtn = document.getElementById('saveBtn');
+            
+            if (!input) {
+                statusDiv.innerHTML = '<div class="error-box">❌ Veuillez entrer une URL</div>';
+                return;
+            }
+
+            // Valider le format de l'URL
+            if (!input.startsWith('https://') || !input.includes('.sharepoint.com')) {
+                statusDiv.innerHTML = '<div class="error-box">❌ L\'URL doit commencer par https:// et contenir .sharepoint.com</div>';
+                return;
+            }
+
+            // Retirer le slash final si présent
+            siteUrl = input.replace(/\/$/, '');
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ Test de connexion...';
+            statusDiv.innerHTML = '<div class="loading-spinner"></div><p style="text-align:center;">Test de connexion à SharePoint...</p>';
+
+            try {
+                // Tester la connexion
+                await getRequestDigest();
+                
+                // Tester l'accès aux listes
+                await testListAccess();
+
+                // Si tout est OK, sauvegarder
+                localStorage.setItem('sp_site_url', siteUrl);
+                statusDiv.innerHTML = '<div class="success-box">✅ Configuration réussie ! Chargement de l\'application...</div>';
+                
+                setTimeout(() => {
+                    loadApp();
+                }, 1000);
+
+            } catch (error) {
+                console.error('Erreur de configuration:', error);
+                statusDiv.innerHTML = `<div class="error-box">
+                    <strong>❌ Erreur de connexion</strong><br>
+                    ${error.message}<br><br>
+                    <strong>Vérifications :</strong><br>
+                    • L'URL est-elle correcte ?<br>
+                    • Êtes-vous connecté à SharePoint ?<br>
+                    • Les listes existent-elles ?<br>
+                    • Avez-vous les permissions ?
+                </div>`;
+                saveBtn.disabled = false;
+                saveBtn.textContent = '✓ Enregistrer et continuer';
+            }
+        }
+
+        async function testListAccess() {
+            const lists = [SP_CONFIG.SLOTS_LIST, SP_CONFIG.RESERVATIONS_LIST, SP_CONFIG.IPE_LIST];
+            
+            for (const listName of lists) {
+                const response = await fetch(
+                    siteUrl + `/_api/web/lists/getbytitle('${listName}')/items?$top=1`,
+                    {
+                        headers: {
+                            'Accept': 'application/json;odata=verbose'
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error(`La liste '${listName}' n'existe pas sur ce site SharePoint`);
+                    } else if (response.status === 403) {
+                        throw new Error(`Accès refusé à la liste '${listName}'. Vérifiez vos permissions.`);
+                    } else {
+                        throw new Error(`Erreur ${response.status} lors de l'accès à la liste '${listName}'`);
+                    }
+                }
+            }
+        }
+
+        function showConfigScreen() {
+            if (confirm('Voulez-vous reconfigurer l\'URL SharePoint ? Cela rechargera l\'application.')) {
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('configScreen').style.display = 'block';
+            }
+        }
+
+        async function loadApp() {
+            document.getElementById('configScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+
+            try {
+                await getRequestDigest();
+                await loadAllData();
+                renderIPESelect();
+                renderSlots();
+            } catch (error) {
+                alert('Erreur de chargement: ' + error.message + '\n\nVeuillez reconfigurer l\'application.');
+                showConfigScreen();
+            }
+        }
+
+        // ========== FONCTIONS SHAREPOINT ==========
+        
+        async function getRequestDigest() {
+            const response = await fetch(siteUrl + '/_api/contextinfo', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json;odata=verbose'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Impossible de se connecter à SharePoint (${response.status})`);
+            }
+            
+            const data = await response.json();
+            requestDigest = data.d.GetContextWebInformation.FormDigestValue;
+        }
+
+        async function loadAllData() {
+            await Promise.all([
+                loadSlots(),
+                loadReservations(),
+                loadIPEs()
+            ]);
+        }
+
+        async function loadSlots() {
+            const response = await fetch(
+                siteUrl + `/_api/web/lists/getbytitle('${SP_CONFIG.SLOTS_LIST}')/items?$top=5000`,
+                {
+                    headers: {
+                        'Accept': 'application/json;odata=verbose'
+                    }
+                }
+            );
+            
+            if (!response.ok) throw new Error(`Erreur chargement créneaux`);
+            
+            const data = await response.json();
+            slots = data.d.results.map(item => ({
+                id: item.Id,
+                date: item.Title,
+                time: item.Horaire,
+                jourSemaine: item.JourSemaine,
+                dateObj: new Date(item.DateISO)
+            }));
+        }
+
+        async function loadReservations() {
+            const response = await fetch(
+                siteUrl + `/_api/web/lists/getbytitle('${SP_CONFIG.RESERVATIONS_LIST}')/items?$top=5000`,
+                {
+                    headers: {
+                        'Accept': 'application/json;odata=verbose'
+                    }
+                }
+            );
+            
+            if (!response.ok) throw new Error(`Erreur chargement réservations`);
+            
+            const data = await response.json();
+            reservations = {};
+            data.d.results.forEach(item => {
+                reservations[item.CreneauID] = item.Title;
+            });
+        }
+
+        async function loadIPEs() {
+            const response = await fetch(
+                siteUrl + `/_api/web/lists/getbytitle('${SP_CONFIG.IPE_LIST}')/items?$top=5000&$orderby=Title`,
+                {
+                    headers: {
+                        'Accept': 'application/json;odata=verbose'
+                    }
+                }
+            );
+            
+            if (!response.ok) throw new Error(`Erreur chargement IPE`);
+            
+            const data = await response.json();
+            ipes = data.d.results.map(item => item.Title);
+        }
+
+        async function createReservation(slotId, ipeName) {
+            await getRequestDigest();
+            
+            const itemData = {
+                '__metadata': { 'type': 'SP.Data.Reservations_BilansListItem' },
+                'Title': ipeName,
+                'CreneauID': slotId
+            };
+
+            const response = await fetch(
+                siteUrl + `/_api/web/lists/getbytitle('${SP_CONFIG.RESERVATIONS_LIST}')/items`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json;odata=verbose',
+                        'Content-Type': 'application/json;odata=verbose',
+                        'X-RequestDigest': requestDigest
+                    },
+                    body: JSON.stringify(itemData)
+                }
+            );
+
+            if (!response.ok) throw new Error('Erreur création réservation');
+        }
+
+        async function deleteReservation(slotId) {
+            const response = await fetch(
+                siteUrl + `/_api/web/lists/getbytitle('${SP_CONFIG.RESERVATIONS_LIST}')/items?$filter=CreneauID eq ${slotId}`,
+                {
+                    headers: {
+                        'Accept': 'application/json;odata=verbose'
+                    }
+                }
+            );
+
+            const data = await response.json();
+            if (data.d.results.length === 0) return;
+
+            const itemId = data.d.results[0].Id;
+            await getRequestDigest();
+
+            await fetch(
+                siteUrl + `/_api/web/lists/getbytitle('${SP_CONFIG.RESERVATIONS_LIST}')/items(${itemId})`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json;odata=verbose',
+                        'X-RequestDigest': requestDigest,
+                        'IF-MATCH': '*',
+                        'X-HTTP-Method': 'DELETE'
+                    }
+                }
+            );
+        }
+
+        // ========== FONCTIONS D'AFFICHAGE ==========
+
+        function renderIPESelect() {
+            const select = document.getElementById('ipeSelect');
+            const currentValue = select.value;
+            
+            select.innerHTML = '<option value="">-- Choisir un IPE --</option>';
+            ipes.forEach(ipe => {
+                const option = document.createElement('option');
+                option.value = ipe;
+                option.textContent = ipe;
+                select.appendChild(option);
+            });
+
+            if (currentValue && ipes.includes(currentValue)) {
+                select.value = currentValue;
+            }
+
+            select.onchange = renderSlots;
+        }
+
+        function updateStats() {
+            const selectedIPE = document.getElementById('ipeSelect').value;
+            
+            const total = slots.length;
+            const reserved = Object.keys(reservations).length;
+            const available = total - reserved;
+            const mine = selectedIPE ? Object.values(reservations).filter(r => r === selectedIPE).length : 0;
+
+            document.getElementById('totalSlots').textContent = total;
+            document.getElementById('availableSlots').textContent = available;
+            document.getElementById('reservedSlots').textContent = reserved;
+            document.getElementById('mySlots').textContent = mine;
+        }
+
+        function renderSlots() {
+            const container = document.getElementById('slotsContainer');
+            const selectedIPE = document.getElementById('ipeSelect').value;
+
+            updateStats();
+
+            if (!selectedIPE) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">👤</div>
+                        <div class="empty-state-title">Sélectionnez votre nom</div>
+                        <div class="empty-state-text">Choisissez votre nom dans la liste ci-dessus</div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (slots.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">📅</div>
+                        <div class="empty-state-title">Aucun créneau</div>
+                        <div class="empty-state-text">Les créneaux seront ajoutés par l'administrateur</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            const sortedSlots = [...slots].sort((a, b) => a.dateObj - b.dateObj);
+            
+            sortedSlots.forEach(slot => {
+                const reservation = reservations[slot.id];
+                const isReserved = !!reservation;
+                const isMine = isReserved && reservation === selectedIPE;
+                
+                let statusClass = 'available';
+                let statusText = 'Disponible';
+                let statusBadgeClass = 'status-available';
+
+                if (isMine) {
+                    statusClass = 'mine';
+                    statusText = 'Ma réservation';
+                    statusBadgeClass = 'status-mine';
+                } else if (isReserved) {
+                    statusClass = 'reserved';
+                    statusText = 'Réservé';
+                    statusBadgeClass = 'status-reserved';
+                }
+
+                const card = document.createElement('div');
+                card.className = `slot-card ${statusClass}`;
+                
+                const displayDate = slot.jourSemaine ? `${slot.jourSemaine} ${slot.date}` : slot.date;
+                
+                card.innerHTML = `
+                    <div class="slot-status ${statusBadgeClass}">${statusText}</div>
+                    <div class="slot-date">${displayDate}</div>
+                    <div class="slot-time">🕐 ${slot.time}</div>
+                    ${isReserved ? `<div class="slot-ipe">👤 ${reservation}</div>` : ''}
+                    ${!isReserved ? `
+                        <div class="slot-actions">
+                            <button class="btn btn-reserve" onclick="reserveSlot(${slot.id})">
+                                ✓ Réserver
+                            </button>
+                        </div>
+                    ` : isMine ? `
+                        <div class="slot-actions">
+                            <button class="btn btn-cancel" onclick="cancelReservation(${slot.id})">
+                                ✗ Annuler
+                            </button>
+                        </div>
+                    ` : ''}
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // ========== RÉSERVATIONS ==========
+
+        function reserveSlot(slotId) {
+            const selectedIPE = document.getElementById('ipeSelect').value;
+            if (!selectedIPE) {
+                alert('Veuillez sélectionner votre nom');
+                return;
+            }
+
+            const slot = slots.find(s => s.id === slotId);
+            currentSlotId = slotId;
+
+            const displayDate = slot.jourSemaine ? `${slot.jourSemaine} ${slot.date}` : slot.date;
+            document.getElementById('modalDate').textContent = displayDate;
+            document.getElementById('modalTime').textContent = slot.time;
+            document.getElementById('modalIPE').textContent = selectedIPE;
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
+        async function confirmReservation() {
+            const selectedIPE = document.getElementById('ipeSelect').value;
+            const confirmBtn = document.querySelector('#confirmModal .btn-reserve');
+            
+            try {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = '⏳ Réservation...';
+                
+                await createReservation(currentSlotId, selectedIPE);
+                reservations[currentSlotId] = selectedIPE;
+                
+                closeModal();
+                renderSlots();
+                alert('✅ Créneau réservé !');
+            } catch (error) {
+                alert('❌ Erreur : ' + error.message);
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = '✓ Confirmer';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').classList.remove('active');
+            currentSlotId = null;
+        }
+
+        function cancelReservation(slotId) {
+            const slot = slots.find(s => s.id === slotId);
+            currentSlotId = slotId;
+
+            const displayDate = slot.jourSemaine ? `${slot.jourSemaine} ${slot.date}` : slot.date;
+            document.getElementById('cancelModalDate').textContent = displayDate;
+            document.getElementById('cancelModalTime').textContent = slot.time;
+            document.getElementById('cancelModal').classList.add('active');
+        }
+
+        async function confirmCancellation() {
+            const cancelBtn = document.querySelector('#cancelModal .btn-cancel');
+            
+            try {
+                cancelBtn.disabled = true;
+                cancelBtn.textContent = '⏳ Annulation...';
+                
+                await deleteReservation(currentSlotId);
+                delete reservations[currentSlotId];
+                
+                closeCancelModal();
+                renderSlots();
+                alert('✅ Réservation annulée !');
+            } catch (error) {
+                alert('❌ Erreur : ' + error.message);
+            } finally {
+                cancelBtn.disabled = false;
+                cancelBtn.textContent = '✓ Annuler la réservation';
+            }
+        }
+
+        function closeCancelModal() {
+            document.getElementById('cancelModal').classList.remove('active');
+            currentSlotId = null;
+        }
+
+        async function refreshData() {
+            const btn = document.querySelector('.btn-refresh');
+            const originalText = btn.textContent;
+            
+            try {
+                btn.disabled = true;
+                btn.textContent = '⏳ Actualisation...';
+                
+                await loadAllData();
+                renderSlots();
+                
+                alert('✅ Données actualisées !');
+            } catch (error) {
+                alert('❌ Erreur : ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        // Fermer modals en cliquant dehors
+        window.onclick = function(event) {
+            const confirmModal = document.getElementById('confirmModal');
+            const cancelModal = document.getElementById('cancelModal');
+
+            if (event.target === confirmModal) closeModal();
+            if (event.target === cancelModal) closeCancelModal();
+        };
+    </script>
+</body>
+</html>
